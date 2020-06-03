@@ -33,15 +33,18 @@ class GalaxyHOD(HaloPopulation):
         hmf = self.halos.tab_dndm
         haloMass = self.halos.tab_M
 
-        pars = {}
-        pars['pq_func'] = 'linear' # double power-law with evolution in norm
-        pars['pq_func_var'] = 'z'
-        pars['pq_func_par0'] = 3e-4
-        pars['pq_func_par1'] = 0
-        pars['pq_func_par2'] = 0
+        #might be overkill here
+        # pars = {}
+        # pars['pq_func'] = 'linear' # double power-law with evolution in norm
+        # pars['pq_func_var'] = 'z'
+        # pars['pq_func_par0'] = 3e-4
+        # pars['pq_func_par1'] = 0
+        # pars['pq_func_par2'] = 0
+
+        # c = ares.phenom.ParameterizedQuantity(**pars) #really just a constant
 
         #LF loglinear models
-        c = ares.phenom.ParameterizedQuantity(**pars) #really just a constant
+        c = 3e-4
         k = np.argmin(np.abs(z - self.halos.tab_z))
         
         LF = (np.log(10)*haloMass)/2.5 * hmf[k, :]
@@ -63,6 +66,7 @@ class GalaxyHOD(HaloPopulation):
         return NumDensity
 
     def _dlogm_dM(self, N, M_1, beta, gamma):
+        #derivative of log10( m ) wrt M for SMF
         
         dydx = -1* ((gamma-1)*(self.halos.tab_M/M_1)**(gamma+beta) - beta - 1) / (np.log(10)*self.halos.tab_M*((self.halos.tab_M/M_1)**(gamma+beta) + 1))
 
@@ -70,12 +74,27 @@ class GalaxyHOD(HaloPopulation):
 
     
     def StellarMassFunction(self, z, bins):
+        """
+        Stellar Mass Function from a double power law, following Moter2010
+        
+        Parameters
+        ----------
+        z : int, float
+            Redshift. Currently does not interpolate between values in halos.tab_z if necessary.
+        bins : bool
+            per stellar mass
+        
+        Returns
+        -------
+        Phi
+        
+        """
 
         #get halo mass function and array of halo masses
         hmf = self.halos.tab_dndm
         haloMass = self.halos.tab_M
 
-        #From Moster2010, table 7
+        #From Moster2010, table 7 - eventually user should be able to change these (also do fits so default ones are better)
         logM_0 = 11.88 #(0.01)
         mu = 0.019 #(0.002)
         N_0 = 0.0282 #(0.0003)
@@ -94,21 +113,21 @@ class GalaxyHOD(HaloPopulation):
 
         parsN = {}
         parsN['pq_func'] = 'pl' # double power-law with evolution in norm
-        parsN['pq_func_var'] = 'z+1'
+        parsN['pq_func_var'] = '1+z'
         parsN['pq_func_par0'] = N_0
         parsN['pq_func_par1'] = 1.0
         parsN['pq_func_par2'] = nu
 
         parsG = {}
         parsG['pq_func'] = 'pl' # double power-law with evolution in norm
-        parsG['pq_func_var'] = 'z+1'
+        parsG['pq_func_var'] = '1+z'
         parsG['pq_func_par0'] = gamma_0
         parsG['pq_func_par1'] = 1.0
         parsG['pq_func_par2'] = gamma_1
 
         parsM = {}
         parsM['pq_func'] = 'pl_10' # double power-law with evolution in norm
-        parsM['pq_func_var'] = 'z+1'
+        parsM['pq_func_var'] = '1+z'
         parsM['pq_func_par0'] = logM_0
         parsM['pq_func_par1'] = 1.0
         parsM['pq_func_par2'] = mu
@@ -120,16 +139,15 @@ class GalaxyHOD(HaloPopulation):
         gamma = ares.phenom.ParameterizedQuantity(**parsG) #gamma_0*(z + 1)**gamma_1 #PL
 
 
-        k = np.argmin(np.abs(z - pop_halo.halos.tab_z))
-        
-        mM_ratio = np.log10( 2*N / ( (haloMass/M_1)**(-beta) + (haloMass/M_1)**(gamma) ) )#equ 2
+        k = np.argmin(np.abs(z - self.halos.tab_z))
 
-        
-        SMF = hmf[k, :] / _dlogm_dM(pop_halo, N, M_1, beta, gamma) #dn/dM / d(log10(m))/dM
+        mM_ratio = np.log10( 2*N(z=z) / ( (haloMass/M_1(z=z))**(-beta(z=z)) + (haloMass/M_1(z=z))**(gamma(z=z)) ) )#equ 2
+
+        SMF = hmf[k, :] / self._dlogm_dM(N(z=z), M_1(z=z), beta(z=z), gamma(z=z)) #dn/dM / d(log10(m))/dM
         StellarMass = 10**(mM_ratio + np.log10(haloMass))
 
 
-        #check if requested magnitudes are in MUV, else interpolate LF function
+        #check if requested mass bins are in StellarMass, else interpolate SMF function
         result =  all(elem in StellarMass for elem in bins)
 
         if result:
@@ -138,8 +156,7 @@ class GalaxyHOD(HaloPopulation):
             phi = SMF[findMass]           
         else:
             print("Interpolating")
-            f = interp1d(StellarMass, SMF, kind='cubic')    
-
+            f = interp1d(StellarMass, SMF, kind='cubic')
             phi = f(bins)
 
 
@@ -150,14 +167,11 @@ class GalaxyHOD(HaloPopulation):
         
     def SFR(self, z, Mh):    
         pass
-        
-            
+                    
     
 if __name__ == '__main__':
     
     pop = GalaxyHOD()
-    
-    
     
     mags = np.arange(-25, -10)
     phi = pop.LuminosityFunction(6., mags)
@@ -171,24 +185,5 @@ if __name__ == '__main__':
     phi = pop.StellarMassFunction(1, bins)
     pl.loglog(bins, phi, marker="o")
     pl.show()
-    
-    # # Example of how to make a double power-law with PQ framework
-    
-    # pars = {}
-    # pars['pq_func'] = 'dpl_evolN' # double power-law with evolution in norm
-    # pars['pq_func_var'] = 'Mh'
-    # pars['pq_func_var2'] = 'z'
-    # pars['pq_func_par0'] = 5e-4
-    # pars['pq_func_par1'] = 1e12
-    # pars['pq_func_par2'] = 1.
-    # pars['pq_func_par3'] = -0.6
-    # pars['pq_func_par4'] = 1e10
-    # pars['pq_func_par5'] = 0.88
-    # pars['pq_func_par6'] = 0.0   # default to no evol
-    
-    # dpl = ares.phenom.ParameterizedQuantity(**pars)
-    
-    # fstar = dpl(z=6., Mh=1e10)
-    
     
         
