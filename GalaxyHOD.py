@@ -166,9 +166,25 @@ class GalaxyHOD(HaloPopulation):
         
     def SFRD(self, z):
         pass
-        
-    def SFR(self, z, Mh):    
+    
+    #main sequence - later change to Mh
+    def SFR(self, z, Ms):   
+        mass = Ms 
+
+        # t: age of universe in Gyr
+        t = cosmo.age(age).value
+
+        if t < cosmo.age(6).value: # if t > z=6
+            print("Warning, age out of well fitting zone of this model.")
+
+        error = np.ones(len(mass)) * 0.2 #[dex] the stated "true" scatter
+
+        return (0.84-0.026*t)*np.log10(mass) - (6.51-0.11*t) #Equ 28
+
+
+    def SSFR(self, z, Mh):
         pass
+
                     
     
 if __name__ == '__main__':
