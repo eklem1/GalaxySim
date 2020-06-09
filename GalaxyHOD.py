@@ -12,7 +12,7 @@ class GalaxyHOD(HaloPopulation):
 
         HaloPopulation.__init__(self, **kwargs)
         
-    def LuminosityFunction(self, z, mags):
+    def LuminosityFunction(self, z, mags, text=True):
         """
         Reconstructed luminosity function from a simple model of L = c*HaloMadd
         
@@ -58,7 +58,8 @@ class GalaxyHOD(HaloPopulation):
             findMags = np.array([elem in mags for elem in MUV])
             NumDensity = LF[findMags]
         else:
-            print("Interpolating")
+            if text:
+                print("Interpolating")
             f = interp1d(MUV, LF, kind='cubic')    
 
             NumDensity = f(mags)
@@ -73,7 +74,7 @@ class GalaxyHOD(HaloPopulation):
         return dydx
 
     
-    def StellarMassFunction(self, z, bins):
+    def StellarMassFunction(self, z, bins, text=True):
         """
         Stellar Mass Function from a double power law, following Moter2010
         
@@ -155,7 +156,8 @@ class GalaxyHOD(HaloPopulation):
             findMass = np.array([elem in bins for elem in StellarMass])
             phi = SMF[findMass]           
         else:
-            print("Interpolating")
+            if text:
+                print("Interpolating")
             f = interp1d(StellarMass, SMF, kind='cubic')
             phi = f(bins)
 
