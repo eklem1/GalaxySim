@@ -9,7 +9,7 @@ from scipy.interpolate import interp1d
 from astropy.cosmology import FlatLambdaCDM
 import astropy.units as u
 
-# cosmo = FlatLambdaCDM(H0=70*u.km/u.s/u.Mpc, Om0=0.3)
+cosmo = FlatLambdaCDM(H0=70*u.km/u.s/u.Mpc, Om0=0.3)
 
 
 class GalaxyHOD(HaloPopulation):
@@ -72,8 +72,8 @@ class GalaxyHOD(HaloPopulation):
 
         return NumDensity
 
-    #derivative of log10( m ) wrt M for SMF
     def _dlogm_dM(self, N, M_1, beta, gamma):
+        #derivative of log10( m ) wrt M for SMF
         
         dydx = -1* ((gamma-1)*(self.halos.tab_M/M_1)**(gamma+beta) - beta - 1) / (np.log(10)*self.halos.tab_M*((self.halos.tab_M/M_1)**(gamma+beta) + 1))
 
@@ -164,7 +164,8 @@ class GalaxyHOD(HaloPopulation):
         
         Returns
         -------
-        Phi
+        Phi : float (array)
+            Number density of galaxies [cMpc^-3 dex^-1]
         """
 
         #get halo mass function and array of halo masses
@@ -186,33 +187,46 @@ class GalaxyHOD(HaloPopulation):
             findMass = np.array([elem in bins for elem in StellarMass])
             phi = SMF[findMass]           
         else:
+            #interpolate
             if text:
                 print("Interpolating")
             f = interp1d(StellarMass, SMF, kind='cubic')
-            #ADD error if SM is out of the range
+            #ADD error catch if SM is out of the range
             phi = f(bins)
-
 
         return phi    
         
     def SFRD(self, z):
+        """
+        Stellar formation rate density.
+        
+        Parameters
+        ----------
+        z : int, float (array)
+            Redshift.
+        
+        Returns
+        -------
+        SFRD : float (array)
+            [M_o/yr/Mpc^3]
+        """
 
+        #population comes from halo and SMF
         hmf = self.halos.tab_dndm
         haloMass = self.halos.tab_M
 
         N, M_1, beta, gamma = self._SMF_PQ()
 
-        #will only return one value
+        #Check if z is only a single value - will only return one value
         if type(z) not in [list, np.ndarray]:
-            # print("only 1 value")
             z = [z]
 
         SFRD = []
 
         for zi in z:
-            # print(zi)
             SM_bins = self._SM_fromHM(zi, haloMass, N, M_1, beta, gamma)
 
+            #get number density
             numberD = self.StellarMassFunction(zi, SM_bins, False)
 
             SFR = 10**self.SFR(zi, SM_bins)/SM_bins
@@ -231,10 +245,26 @@ class GalaxyHOD(HaloPopulation):
 
         return SFRD
     
-    #main sequence
-    def SFR(self, z, mass, haloMass=False):   
 
-        cosmo = FlatLambdaCDM(H0=70*u.km/u.s/u.Mpc, Om0=0.3)
+    def SFR(self, z, mass, haloMass=False):   
+        """
+        Main sequence stellar formation rate from Speagle2014
+        
+        Parameters
+        ----------
+        z : int, float
+            Redshift.
+        mass : float (array)
+            if haloMass=False (default) is the stellar masses [stellar mass]
+            else halo masses [stellar mass]
+        
+        Returns
+        -------
+        logSFR : float (array)
+            log10 of MS SFR [yr^-1]
+        """
+
+        # cosmo = FlatLambdaCDM(H0=70*u.km/u.s/u.Mpc, Om0=0.3)
 
         if haloMass:
             #convert from halo mass to stellar mass
@@ -250,11 +280,28 @@ class GalaxyHOD(HaloPopulation):
             print("Warning, age out of well fitting zone of this model.")
 
         error = np.ones(len(Ms)) * 0.2 #[dex] the stated "true" scatter
+        logSFR = (0.84-0.026*t)*np.log10(Ms) - (6.51-0.11*t) #Equ 28
 
-        return (0.84-0.026*t)*np.log10(Ms) - (6.51-0.11*t) #Equ 28
+        return logSFR
 
     #specific sfr
     def SSFR(self, z, mass, haloMass=False):
+        """
+        Specific stellar formation rate.
+        
+        Parameters
+        ----------
+        z : int, float
+            Redshift.
+        mass : float (array)
+            if haloMass=False (default) is the stellar masses [stellar mass]
+            else halo masses [stellar mass]
+        
+        Returns
+        -------
+        logSSFR : float (array)
+            log10 of SSFR [yr^-1]
+        """
 
         if haloMass:
             #convert from halo mass to stellar mass
@@ -263,9 +310,9 @@ class GalaxyHOD(HaloPopulation):
         else:
             Ms = mass
 
-        SSFR = self.SFR(z, Ms) - np.log10(Ms)
+        logSSFR = self.SFR(z, Ms) - np.log10(Ms)
 
-        return SSFR
+        return logSSFR
 
                     
     
