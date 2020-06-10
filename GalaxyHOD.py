@@ -5,6 +5,12 @@ from ares.populations.Halo import HaloPopulation
 import numpy as np
 from scipy.interpolate import interp1d
 
+#Is there a built in thing in ARES for this?
+from astropy.cosmology import FlatLambdaCDM
+import astropy.units as u
+
+# cosmo = FlatLambdaCDM(H0=70*u.km/u.s/u.Mpc, Om0=0.3)
+
 
 class GalaxyHOD(HaloPopulation):
     def __init__(self, **kwargs):
@@ -66,34 +72,38 @@ class GalaxyHOD(HaloPopulation):
 
         return NumDensity
 
+    #derivative of log10( m ) wrt M for SMF
     def _dlogm_dM(self, N, M_1, beta, gamma):
-        #derivative of log10( m ) wrt M for SMF
         
         dydx = -1* ((gamma-1)*(self.halos.tab_M/M_1)**(gamma+beta) - beta - 1) / (np.log(10)*self.halos.tab_M*((self.halos.tab_M/M_1)**(gamma+beta) + 1))
 
         return dydx
 
-    
-    def StellarMassFunction(self, z, bins, text=True):
+
+    def _SM_fromHM(self, z, haloMass, N, M_1, beta, gamma):
         """
-        Stellar Mass Function from a double power law, following Moter2010
-        
+        Using the SMHM ratio, given a halo mass, returns the corresponding stellar mass
+
         Parameters
-        ----------
-        z : int, float
-            Redshift. Currently does not interpolate between values in halos.tab_z if necessary.
-        bins : bool
-            per stellar mass
-        
-        Returns
-        -------
-        Phi
-        
+            ----------
+            z : int, float
+                Redshift.
+            haloMass : float
+                per stellar mass
+            N, M_1, beta, gamma : Parameterized Quantities
+                Dependant on z
+
         """
 
-        #get halo mass function and array of halo masses
-        hmf = self.halos.tab_dndm
-        haloMass = self.halos.tab_M
+        mM_ratio = np.log10( 2*N(z=z) / ( (haloMass/M_1(z=z))**(-beta(z=z)) + (haloMass/M_1(z=z))**(gamma(z=z)) ) ) #equ 2
+
+        StellarMass = 10**(mM_ratio + np.log10(haloMass))
+
+        return StellarMass
+
+    def _SMF_PQ(self):
+
+        #could have these as defaults for variables passed?
 
         #From Moster2010, table 7 - eventually user should be able to change these (also do fits so default ones are better)
         logM_0 = 11.88 #(0.01)
@@ -133,20 +143,40 @@ class GalaxyHOD(HaloPopulation):
         parsM['pq_func_par1'] = 1.0
         parsM['pq_func_par2'] = mu
 
-
         N = ares.phenom.ParameterizedQuantity(**parsN) #N_0 * (z + 1)**nu #PL
         M_1 = ares.phenom.ParameterizedQuantity(**parsM) #10**(logM_0*(z+1)**mu)
         beta = ares.phenom.ParameterizedQuantity(**parsB) #beta_1*z+beta_0 #linear
         gamma = ares.phenom.ParameterizedQuantity(**parsG) #gamma_0*(z + 1)**gamma_1 #PL
 
+        return N, M_1, beta, gamma
+
+    
+    def StellarMassFunction(self, z, bins, text=True):
+        """
+        Stellar Mass Function from a double power law, following Moter2010
+        
+        Parameters
+        ----------
+        z : int, float
+            Redshift. Currently does not interpolate between values in halos.tab_z if necessary.
+        bins : bool
+            per stellar mass
+        
+        Returns
+        -------
+        Phi
+        """
+
+        #get halo mass function and array of halo masses
+        hmf = self.halos.tab_dndm
+        haloMass = self.halos.tab_M
+
+        N, M_1, beta, gamma = self._SMF_PQ()
 
         k = np.argmin(np.abs(z - self.halos.tab_z))
 
-        mM_ratio = np.log10( 2*N(z=z) / ( (haloMass/M_1(z=z))**(-beta(z=z)) + (haloMass/M_1(z=z))**(gamma(z=z)) ) )#equ 2
-
         SMF = hmf[k, :] / self._dlogm_dM(N(z=z), M_1(z=z), beta(z=z), gamma(z=z)) #dn/dM / d(log10(m))/dM
-        StellarMass = 10**(mM_ratio + np.log10(haloMass))
-
+        StellarMass = self._SM_fromHM(z, haloMass, N, M_1, beta, gamma)
 
         #check if requested mass bins are in StellarMass, else interpolate SMF function
         result =  all(elem in StellarMass for elem in bins)
@@ -159,31 +189,83 @@ class GalaxyHOD(HaloPopulation):
             if text:
                 print("Interpolating")
             f = interp1d(StellarMass, SMF, kind='cubic')
+            #ADD error if SM is out of the range
             phi = f(bins)
 
 
         return phi    
         
     def SFRD(self, z):
-        pass
+
+        hmf = self.halos.tab_dndm
+        haloMass = self.halos.tab_M
+
+        N, M_1, beta, gamma = self._SMF_PQ()
+
+        #will only return one value
+        if type(z) not in [list, np.ndarray]:
+            # print("only 1 value")
+            z = [z]
+
+        SFRD = []
+
+        for zi in z:
+            # print(zi)
+            SM_bins = self._SM_fromHM(zi, haloMass, N, M_1, beta, gamma)
+
+            numberD = self.StellarMassFunction(zi, SM_bins, False)
+
+            SFR = 10**self.SFR(zi, SM_bins)/SM_bins
+            error = 0.2 * SFR * np.log(10)
+
+            dbin = []
+            for i in range(0, len(SM_bins) - 1):
+                dbin.append(SM_bins[i+1]-SM_bins[i])
+
+            SFRD_val = np.sum( numberD[:-1] * SFR[:-1] * dbin )
+            SFRD_err = np.sqrt(np.sum( numberD[:-1] * dbin * error[:-1])**2)
+            
+            SFRD.append([SFRD_val, SFRD_err])
+
+        SFRD = np.transpose(SFRD) # [sfrd, err]
+
+        return SFRD
     
-    #main sequence - later change to Mh
-    def SFR(self, z, Ms):   
-        mass = Ms 
+    #main sequence
+    def SFR(self, z, mass, haloMass=False):   
+
+        cosmo = FlatLambdaCDM(H0=70*u.km/u.s/u.Mpc, Om0=0.3)
+
+        if haloMass:
+            #convert from halo mass to stellar mass
+            N, M_1, beta, gamma = self._SMF_PQ()
+            Ms = self._SM_fromHM(z, mass, N, M_1, beta, gamma)
+        else:
+            Ms = mass
 
         # t: age of universe in Gyr
-        t = cosmo.age(age).value
+        t = cosmo.age(z).value
 
         if t < cosmo.age(6).value: # if t > z=6
             print("Warning, age out of well fitting zone of this model.")
 
-        error = np.ones(len(mass)) * 0.2 #[dex] the stated "true" scatter
+        error = np.ones(len(Ms)) * 0.2 #[dex] the stated "true" scatter
 
-        return (0.84-0.026*t)*np.log10(mass) - (6.51-0.11*t) #Equ 28
+        return (0.84-0.026*t)*np.log10(Ms) - (6.51-0.11*t) #Equ 28
 
+    #specific sfr
+    def SSFR(self, z, mass, haloMass=False):
 
-    def SSFR(self, z, Mh):
-        pass
+        if haloMass:
+            #convert from halo mass to stellar mass
+            N, M_1, beta, gamma = self._SMF_PQ()
+            Ms = self._SM_fromHM(z, mass, N, M_1, beta, gamma)
+        else:
+            Ms = mass
+
+        SSFR = self.SFR(z, Ms) - np.log10(Ms)
+
+        return SSFR
 
                     
     
