@@ -188,11 +188,20 @@ class GalaxyHOD(HaloPopulation):
             phi = SMF[findMass]           
         else:
             #interpolate
+            f = interp1d(StellarMass, SMF, kind='cubic')
             if text:
                 print("Interpolating")
-            f = interp1d(StellarMass, SMF, kind='cubic')
+
+            try:
+                phi = f(bins)
+            except ValueError:
+                raise ValueError('Stellar mass is out of interpolation bounds')
+            # else:
+
+            
             #ADD error catch if SM is out of the range
-            phi = f(bins)
+
+            # raise ValueError('Unrecognized sfrd_model {!s}'.format(model))
 
         return phi    
         
