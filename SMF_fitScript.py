@@ -1,5 +1,9 @@
-# -*- coding: utf-8 -*-
 """
+Emma Klemets
+Affiliation: McGill University
+Created on: June 24, 2020
+
+Description: Running MCMC of the SMF to fit the 8 parameters using a GalaxyHOD model.s
 
 """
 
@@ -7,6 +11,9 @@ import ares
 import numpy as np
 import matplotlib.pyplot as pl
 import distpy
+
+from distpy.distribution import UniformDistribution
+from distpy.distribution import DistributionSet
 
 #could add sources so only those used to fit are considered
 def getMasses(redshifts):
@@ -29,15 +36,14 @@ def getMasses(redshifts):
     Ms = np.sort(Ms)
     return Ms
 
+#add easier control over redshifts so it isn't manual?
+
 # Independent variables
 redshifts = np.sort(np.array([0.35, 0.875, 1.125, 1.75, 2.25, 2.75, 1.65, 2.5, 3.5, 0.10165, 0.25, 0.45, 0.575, 0.725, 0.9]))
 
-
-# [0.10165, 0.25, 0.35, 0.45, 0.575, 0.725, 0.9][1.65, 2.5, 3.5]
-#Ms = np.logspace(7, 12, 50)
 Ms = getMasses(redshifts)
 
-# blob 1: the LF. Give it a name, and the function needed to calculate it.
+# blob 1: the smf
 blob_n1 = ['galaxy_smf']
 blob_i1 = [('z', redshifts), ('bins', Ms)]
 blob_f1 = ['StellarMassFunction']
@@ -55,6 +61,7 @@ base_pars = ares.util.ParameterBundle('emma:model1')
 base_pars.update(blob_pars)
 base_pars.update({'progress_bar': True, 'debug':True})
 
+#set free parameters to be fit
 free_pars = \
 [
     'pq_func_par0[0]',
@@ -75,9 +82,7 @@ free_pars = \
 
 is_log = [False, False, False, False, False, False, False, False]
 
-from distpy.distribution import UniformDistribution
-from distpy.distribution import DistributionSet
-
+#priors for each free parameter
 ps = DistributionSet()
 ps.add_distribution(UniformDistribution(0, 4), 'pq_func_par0[0]')
 ps.add_distribution(UniformDistribution(-1, 1),  'pq_func_par2[0]')
@@ -91,6 +96,7 @@ ps.add_distribution(UniformDistribution(-3, -0.01),  'pq_func_par2[2]')
 ps.add_distribution(UniformDistribution(10.0, 14.0),   'pq_func_par0[3]')
 ps.add_distribution(UniformDistribution(0, 2),  'pq_func_par2[3]')
 
+#initial guesses
 #From Moster2010, table 7
 logM_0 = 11.88 #(0.01)
 mu = 0.019 #(0.002)
@@ -138,8 +144,6 @@ fitter.save_hmf = True  # cache HMF for a speed-up!
 fitter.save_psm = True  # cache source SED model (e.g., BPASS, S99)
 
 # Setting this flag to False will make ARES generate new files for each checkpoint.
-# 2-D blobs can get large, so this allows us to just download a single
-# snapshot or two if we'd like (useful if running on remote machine)
 fitter.checkpoint_append = False
 
 fitter.parameters = free_pars
@@ -147,14 +151,13 @@ fitter.is_log = is_log
 fitter.prior_set = ps
 
 # In general, the more the merrier (~hundreds)
-fitter.nwalkers = 70
+fitter.nwalkers = 80
 
-# fitter.jitter = [0.1] * len(fitter.parameters)
-fitter.jitter = [0.1, 0.1, 0.01, 0.05, 0.1, 0.1, 0.8, 0.1]
+fitter.jitter = [0.05] * len(fitter.parameters)
+#fitter.jitter = [0.1, 0.1, 0.01, 0.05, 0.1, 0.1, 0.8, 0.1]
 
 fitter.guesses = guesses
 # fitter.debug('True')
-# fitter.pops
 
 # Run the thing
-fitter.run('smf_run3', burn=20, steps=120, save_freq=5, clobber=True)
+fitter.run('smf_run2', burn=15, steps=100, save_freq=5, clobber=True)
