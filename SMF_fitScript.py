@@ -39,7 +39,7 @@ def getMasses(redshifts):
 #add easier control over redshifts so it isn't manual?
 
 # Independent variables
-redshifts = np.sort(np.array([0.35, 0.875, 1.125, 1.75, 2.25, 2.75, 1.65, 2.5, 3.5, 0.10165, 0.25, 0.45, 0.575, 0.725, 0.9]))
+redshifts = np.sort(np.array([0.35, 0.875, 1.125, 1.75, 2.25, 2.75, 1.65, 2.5, 0.10165, 0.25, 0.45, 0.575, 0.725, 0.9]))
 
 Ms = getMasses(redshifts)
 
@@ -87,7 +87,7 @@ ps = DistributionSet()
 ps.add_distribution(UniformDistribution(0, 4), 'pq_func_par0[0]')
 ps.add_distribution(UniformDistribution(-1, 1),  'pq_func_par2[0]')
 
-ps.add_distribution(UniformDistribution(0.001, 2),   'pq_func_par0[1]')
+ps.add_distribution(UniformDistribution(0, 2),   'pq_func_par0[1]')
 ps.add_distribution(UniformDistribution(-1, 1),  'pq_func_par2[1]')
 
 ps.add_distribution(UniformDistribution(0, .9),   'pq_func_par0[2]')
@@ -98,7 +98,7 @@ ps.add_distribution(UniformDistribution(0, 2),  'pq_func_par2[3]')
 
 #initial guesses
 #From Moster2010, table 7
-logM_0 = 11.88 #(0.01)
+#logM_0 = 11.88 #(0.01)
 mu = 0.019 #(0.002)
 N_0 = 0.0282 #(0.0003)
 nu = -0.72 #(0.06)
@@ -106,6 +106,8 @@ gamma_0 = 0.556 #0.001
 gamma_1 = -0.26 #(0.05)
 beta_0 = 1.06 #(0.06)
 beta_1 = 0.17 #(0.12)
+
+logM_0 = 11.0
 
 guesses = \
 {
@@ -131,7 +133,7 @@ fitter_smf = ares.inference.FitGalaxyPopulation(**base_pars)
 fitter_smf.include.append('smf')
 
 # The data can also be provided more explicitly
-fitter_smf.data = 'tomczak2014',  'mortlock2011', 'moustakas2013', 'marchesini2009_10'
+fitter_smf.data = 'tomczak2014',  'mortlock2011', 'moustakas2013'#, 'marchesini2009_10'
 
 fitter = ares.inference.ModelFit(**base_pars)
 fitter.add_fitter(fitter_smf)
@@ -151,13 +153,13 @@ fitter.is_log = is_log
 fitter.prior_set = ps
 
 # In general, the more the merrier (~hundreds)
-fitter.nwalkers = 80
+fitter.nwalkers = 110
 
-fitter.jitter = [0.05] * len(fitter.parameters)
+fitter.jitter = [0.1] * len(fitter.parameters)
 #fitter.jitter = [0.1, 0.1, 0.01, 0.05, 0.1, 0.1, 0.8, 0.1]
 
 fitter.guesses = guesses
 # fitter.debug('True')
 
 # Run the thing
-fitter.run('smf_run2', burn=15, steps=100, save_freq=5, clobber=True)
+fitter.run('MCMC_files/smf_run5', burn=15, steps=100, save_freq=5, clobber=True)
