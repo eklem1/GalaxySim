@@ -39,7 +39,7 @@ def getMasses(redshifts):
 #add easier control over redshifts so it isn't manual?
 
 # Independent variables
-redshifts = np.sort(np.array([0.35, 0.875, 1.125, 1.75, 2.25, 2.75, 1.65, 2.5, 0.10165, 0.25, 0.45, 0.575, 0.725, 0.9]))
+redshifts = np.sort(np.array([0.35, 0.875, 1.125, 1.75, 2.25, 2.75, 1.65, 2.5, 3.5, 0.10165, 0.25, 0.45, 0.575, 0.725, 0.9]))
 
 Ms = getMasses(redshifts)
 
@@ -133,7 +133,7 @@ fitter_smf = ares.inference.FitGalaxyPopulation(**base_pars)
 fitter_smf.include.append('smf')
 
 # The data can also be provided more explicitly
-fitter_smf.data = 'tomczak2014',  'mortlock2011', 'moustakas2013'#, 'marchesini2009_10'
+fitter_smf.data = 'tomczak2014',  'mortlock2011', 'moustakas2013', 'marchesini2009_10'
 
 fitter = ares.inference.ModelFit(**base_pars)
 fitter.add_fitter(fitter_smf)
@@ -155,11 +155,11 @@ fitter.prior_set = ps
 # In general, the more the merrier (~hundreds)
 fitter.nwalkers = 110
 
-fitter.jitter = [0.1] * len(fitter.parameters)
-#fitter.jitter = [0.1, 0.1, 0.01, 0.05, 0.1, 0.1, 0.8, 0.1]
+#fitter.jitter = [0.1] * len(fitter.parameters)
+fitter.jitter = [0.01, 0.01, 0.001, 0.005, 0.01, 0.01, 0.04, 0.01]
 
 fitter.guesses = guesses
 # fitter.debug('True')
 
 # Run the thing
-fitter.run('MCMC_files/smf_run5', burn=15, steps=100, save_freq=5, clobber=True)
+fitter.run('MCMC_files/smf_run6', burn=25, steps=100, save_freq=5, clobber=True)
