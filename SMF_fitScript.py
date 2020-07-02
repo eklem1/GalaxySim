@@ -15,37 +15,17 @@ import distpy
 from distpy.distribution import UniformDistribution
 from distpy.distribution import DistributionSet
 
-#could add sources so only those used to fit are considered
-def getMasses(redshifts):
-    data = ares.analysis.GalaxyPopulation()
-
-    Ms = []
-    for z in redshifts:
-        data_info = data.compile_data(z, quantity='smf')
-
-        # print(data_info)
-
-        mass = []
-        for i in data_info:
-    #         mass.append(data_info[i]["M"][~data_info[i]["M"].mask])
-            mass.extend(data_info[i]["M"].compressed())
-
-        Ms.extend(mass)
-
-    Ms = list(set(Ms))
-    Ms = np.sort(Ms)
-    return Ms
 
 #add easier control over redshifts so it isn't manual?
 
 # Independent variables
 redshifts = np.sort(np.array([0.35, 0.875, 1.125, 1.75, 2.25, 2.75, 1.65, 2.5, 3.5, 0.10165, 0.25, 0.45, 0.575, 0.725, 0.9]))
 
-Ms = getMasses(redshifts)
+Ms = np.linspace(7, 12, 60)
 
 # blob 1: the smf
 blob_n1 = ['galaxy_smf']
-blob_i1 = [('z', redshifts), ('bins', Ms)]
+blob_i1 = [('z', redshifts), ('logbins', Ms)]
 blob_f1 = ['StellarMassFunction']
 
 blob_pars = \
@@ -98,7 +78,7 @@ ps.add_distribution(UniformDistribution(0, 2),  'pq_func_par2[3]')
 
 #initial guesses
 #From Moster2010, table 7
-#logM_0 = 11.88 #(0.01)
+logM_0 = 11.88 #(0.01)
 mu = 0.019 #(0.002)
 N_0 = 0.0282 #(0.0003)
 nu = -0.72 #(0.06)
@@ -107,7 +87,7 @@ gamma_1 = -0.26 #(0.05)
 beta_0 = 1.06 #(0.06)
 beta_1 = 0.17 #(0.12)
 
-logM_0 = 11.0
+#logM_0 = 11.0
 
 guesses = \
 {
@@ -162,4 +142,4 @@ fitter.guesses = guesses
 # fitter.debug('True')
 
 # Run the thing
-fitter.run('MCMC_files/smf_run6', burn=25, steps=100, save_freq=5, clobber=True)
+fitter.run('MCMC_files/smf_run1', burn=25, steps=100, save_freq=5, clobber=True)
