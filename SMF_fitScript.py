@@ -64,17 +64,29 @@ is_log = [False, False, False, False, False, False, False, False]
 
 #priors for each free parameter
 ps = DistributionSet()
+#ps.add_distribution(UniformDistribution(0, 4), 'pq_func_par0[0]')
+#ps.add_distribution(UniformDistribution(-1, 1),  'pq_func_par2[0]')
+#
+#ps.add_distribution(UniformDistribution(0, 2),   'pq_func_par0[1]')
+#ps.add_distribution(UniformDistribution(-1, 1),  'pq_func_par2[1]')
+#
+#ps.add_distribution(UniformDistribution(0, .9),   'pq_func_par0[2]')
+#ps.add_distribution(UniformDistribution(-3, -0.01),  'pq_func_par2[2]')
+#
+#ps.add_distribution(UniformDistribution(10.0, 14.0),   'pq_func_par0[3]')
+#ps.add_distribution(UniformDistribution(0, 2),  'pq_func_par2[3]')
+
 ps.add_distribution(UniformDistribution(0, 4), 'pq_func_par0[0]')
 ps.add_distribution(UniformDistribution(-1, 1),  'pq_func_par2[0]')
 
 ps.add_distribution(UniformDistribution(0, 2),   'pq_func_par0[1]')
 ps.add_distribution(UniformDistribution(-1, 1),  'pq_func_par2[1]')
 
-ps.add_distribution(UniformDistribution(0, .9),   'pq_func_par0[2]')
-ps.add_distribution(UniformDistribution(-3, -0.01),  'pq_func_par2[2]')
+ps.add_distribution(UniformDistribution(0, 1),   'pq_func_par0[2]')
+ps.add_distribution(UniformDistribution(-3, 1),  'pq_func_par2[2]')
 
 ps.add_distribution(UniformDistribution(10.0, 14.0),   'pq_func_par0[3]')
-ps.add_distribution(UniformDistribution(0, 2),  'pq_func_par2[3]')
+ps.add_distribution(UniformDistribution(-1, 2),  'pq_func_par2[3]')
 
 #initial guesses
 #From Moster2010, table 7
@@ -135,11 +147,11 @@ fitter.prior_set = ps
 # In general, the more the merrier (~hundreds)
 fitter.nwalkers = 110
 
-#fitter.jitter = [0.1] * len(fitter.parameters)
-fitter.jitter = [0.01, 0.01, 0.001, 0.005, 0.01, 0.01, 0.04, 0.01]
+fitter.jitter = [0.1] * len(fitter.parameters)
+#fitter.jitter = [0.01, 0.01, 0.001, 0.005, 0.01, 0.01, 0.04, 0.01]
 
 fitter.guesses = guesses
 # fitter.debug('True')
 
 # Run the thing
-fitter.run('MCMC_files/smf_run1', burn=25, steps=100, save_freq=5, clobber=True)
+fitter.run('MCMC_files/smf_run1', burn=30, steps=120, save_freq=5, clobber=True)
