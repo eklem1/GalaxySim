@@ -9,8 +9,8 @@ Description: Running MCMC of the SMF to fit the 8 parameters using a GalaxyHOD m
 
 import ares
 import numpy as np
-import matplotlib.pyplot as pl
-import distpy
+#import matplotlib.pyplot as pl
+#import distpy
 
 from distpy.distribution import UniformDistribution
 from distpy.distribution import DistributionSet
@@ -19,7 +19,7 @@ from distpy.distribution import DistributionSet
 
 # Independent variables
 #redshifts = np.sort(np.array([0.35, 0.875, 1.125, 1.75, 2.25, 2.75, 1.65, 2.5, 3.5, 0.10165, 0.25, 0.45, 0.575, 0.725, 0.9]))
-redshifts = np.sort(np.array([0.35, 0.875, 0.10165, 0.25, 0.45, 0.575, 0.725, 0.9]))
+redshifts = np.sort(np.array([0.35, 0.875, 0.10165, 0.25, 0.45, 0.575, 0.725, 0.9, 1.125, 1.65]))
 
 Ms = np.linspace(7, 12, 60)
 
@@ -78,17 +78,17 @@ ps = DistributionSet()
 
 
 
-ps.add_distribution(UniformDistribution(0, 4), 'pq_func_par0[0]')
+ps.add_distribution(UniformDistribution(-1, 4), 'pq_func_par0[0]')
 ps.add_distribution(UniformDistribution(-1, 1),  'pq_func_par2[0]')
 
 ps.add_distribution(UniformDistribution(0, 2),   'pq_func_par0[1]')
 ps.add_distribution(UniformDistribution(-1, 1),  'pq_func_par2[1]')
 
-ps.add_distribution(UniformDistribution(0, 1),   'pq_func_par0[2]')#
-ps.add_distribution(UniformDistribution(-3, 1),  'pq_func_par2[2]')#
+ps.add_distribution(UniformDistribution(0, 1),   'pq_func_par0[2]')
+ps.add_distribution(UniformDistribution(-3, 1),  'pq_func_par2[2]')
 
 ps.add_distribution(UniformDistribution(10.0, 14.0),   'pq_func_par0[3]')
-ps.add_distribution(UniformDistribution(-1, 2),  'pq_func_par2[3]')#
+ps.add_distribution(UniformDistribution(-1, 2),  'pq_func_par2[3]')
 
 #initial guesses
 #From Moster2010, table 7
@@ -156,4 +156,4 @@ fitter.guesses = guesses
 # fitter.debug('True')
 
 # Run the thing
-fitter.run('MCMC_files/smf_run3_07_07', burn=20, steps=80, save_freq=5, clobber=True)
+fitter.run('MCMC_files/smf_run4_07_08', burn=5, steps=60, save_freq=5, clobber=True)

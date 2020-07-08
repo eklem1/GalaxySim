@@ -1,6 +1,7 @@
 # GalaxySim
 
-**GalaxyHOD.py**: The basis for a new ARES class with a LF and SMF model based off the work below, as well as main sequence SFR, SSFR and SFRD models.
+**GalaxyHOD.py**: The basis for a new ARES class with a LF and SMF model based off the work below, as well as main sequence SFR, SSFR and SFRD models.   
+See https://github.com/eklem1/ares/tree/hod_add for updated file.   
 Basic set up:
 ```
 pars = ares.util.ParameterBundle("emma:model1")
