@@ -19,7 +19,7 @@ from distpy.distribution import DistributionSet
 
 # Independent variables
 #redshifts = np.sort(np.array([0.35, 0.875, 1.125, 1.75, 2.25, 2.75, 1.65, 2.5, 3.5, 0.10165, 0.25, 0.45, 0.575, 0.725, 0.9]))
-redshifts = np.sort(np.array([0.35, 0.875, 0.10165, 0.25, 0.45, 0.575, 0.725, 0.9, 1.125, 1.65]))
+redshifts = np.sort(np.array([0.35, 0.875, 0.10165, 0.25, 0.45, 0.575, 0.725, 0.9]))
 
 Ms = np.linspace(7, 12, 60)
 
@@ -64,20 +64,6 @@ is_log = [False, False, False, False, False, False, False, False]
 
 #priors for each free parameter
 ps = DistributionSet()
-#ps.add_distribution(UniformDistribution(0, 4), 'pq_func_par0[0]')
-#ps.add_distribution(UniformDistribution(-1, 1),  'pq_func_par2[0]')
-#
-#ps.add_distribution(UniformDistribution(0, 2),   'pq_func_par0[1]')
-#ps.add_distribution(UniformDistribution(-1, 1),  'pq_func_par2[1]')
-#
-#ps.add_distribution(UniformDistribution(0, .9),   'pq_func_par0[2]')
-#ps.add_distribution(UniformDistribution(-3, -0.01),  'pq_func_par2[2]')
-#
-#ps.add_distribution(UniformDistribution(10.0, 14.0),   'pq_func_par0[3]')
-#ps.add_distribution(UniformDistribution(-1, 1),  'pq_func_par2[3]')
-
-
-
 ps.add_distribution(UniformDistribution(-1, 4), 'pq_func_par0[0]')
 ps.add_distribution(UniformDistribution(-1, 1),  'pq_func_par2[0]')
 
@@ -147,7 +133,7 @@ fitter.is_log = is_log
 fitter.prior_set = ps
 
 # In general, the more the merrier (~hundreds)
-fitter.nwalkers = 50
+fitter.nwalkers = 36
 
 fitter.jitter = [0.1] * len(fitter.parameters)
 #fitter.jitter = [0.01, 0.01, 0.001, 0.005, 0.01, 0.01, 0.04, 0.01]
@@ -156,4 +142,4 @@ fitter.guesses = guesses
 # fitter.debug('True')
 
 # Run the thing
-fitter.run('MCMC_files/smf_run4_07_08', burn=5, steps=60, save_freq=5, clobber=True)
+fitter.run('MCMC_files/smf_run1_07_09', burn=5, steps=50, save_freq=5, clobber=True)

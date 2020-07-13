@@ -1,5 +1,4 @@
 """
-
 GalaxyHOD.py
 
 Author: Emma Klemets
@@ -14,15 +13,11 @@ from .Halo import HaloPopulation
 from ..phenom.ParameterizedQuantity import ParameterizedQuantity
 from ..util.ParameterFile import get_pq_pars
 from ..analysis.BlobFactory import BlobFactory
+from ..physics.Constants import s_per_gyr
+from ..physics.Cosmology import Cosmology
+
 import numpy as np
 from scipy.interpolate import interp1d
-
-#Is there a built in thing in ARES for this?
-from astropy.cosmology import FlatLambdaCDM
-import astropy.units as u
-
-cosmo = FlatLambdaCDM(H0=70*u.km/u.s/u.Mpc, Om0=0.3)
-
 
 class GalaxyHOD(HaloPopulation, BlobFactory):
     def __init__(self, **kwargs):
@@ -135,7 +130,7 @@ class GalaxyHOD(HaloPopulation, BlobFactory):
         return N, M_1, beta, gamma
 
     
-    def StellarMassFunction(self, z, bins, text=True, **kwargs):
+    def StellarMassFunction(self, z, logbins, text=True, **kwargs):
         """
         Stellar Mass Function from a double power law, following Moster2010
         
@@ -143,8 +138,8 @@ class GalaxyHOD(HaloPopulation, BlobFactory):
         ----------
         z : int, float
             Redshift. Currently does not interpolate between values in halos.tab_z if necessary.
-        bins : float
-            Stellar mass bins. per stellar mass
+        logbins : float
+            log10 of Stellar mass bins. per stellar mass
         
         Returns
         -------
@@ -153,8 +148,10 @@ class GalaxyHOD(HaloPopulation, BlobFactory):
         """
 
         #catch if only one magnitude is passed
-        if type(bins) not in [list, np.ndarray]:
-            bins = [bins]
+        if type(logbins) not in [list, np.ndarray]:
+            bins = [10**logbins]
+        else:
+            bins = [10**i for i in logbins]
 
         #get halo mass function and array of halo masses
         hmf = self.halos.tab_dndm
@@ -167,24 +164,36 @@ class GalaxyHOD(HaloPopulation, BlobFactory):
         SMF = hmf[k, :] / self._dlogm_dM(N(z=z), M_1(z=z), beta(z=z), gamma(z=z)) #dn/dM / d(log10(m))/dM
         StellarMass = self._SM_fromHM(z, haloMass, N, M_1, beta, gamma)
 
-        #check if requested mass bins are in StellarMass, else interpolate SMF function
-        result =  all(elem in StellarMass for elem in bins)
+        # print("SMF first")
+        # print(SMF)
 
-        if result:
-            #slice list to get the values requested
-            findMass = np.array([elem in bins for elem in StellarMass])
-            phi = SMF[findMass]           
+        # print("SM now")
+        # print(StellarMass)
+
+        if np.isinf(StellarMass).all() or np.count_nonzero(StellarMass) == 0:
+            #something is wrong with the parameters and _SM_fromHM returned +/- infs
+            # print("SM is inf!")
+            phi = -np.inf * np.ones(len(bins))
         else:
-            #interpolate
-            # if text:
-            #     print("Interpolating")
-            f = interp1d(StellarMass, SMF, kind='cubic')
-            #ADD error catch if SM is out of the range
-            try:
-                phi = f(bins)
-            except:
-                # print("Error, bin(s) out of interpolation bounds")
-                phi = -np.inf * np.ones(len(bins))
+
+            #check if requested mass bins are in StellarMass, else interpolate SMF function
+            result =  all(elem in StellarMass for elem in bins)
+
+            if result:
+                #slice list to get the values requested
+                findMass = np.array([elem in bins for elem in StellarMass])
+                phi = SMF[findMass]           
+            else:
+                #interpolate
+                # if text:
+                #     print("Interpolating")
+                f = interp1d(StellarMass, SMF, kind='cubic')
+                #ADD error catch if SM is out of the range
+                try:
+                    phi = f(bins)
+                except:
+                    # print("Error, bin(s) out of interpolation bounds")
+                    phi = -np.inf * np.ones(len(bins))
 
 
         return phi    
@@ -220,9 +229,9 @@ class GalaxyHOD(HaloPopulation, BlobFactory):
             SM_bins = self._SM_fromHM(zi, haloMass, N, M_1, beta, gamma)
 
             #get number density
-            numberD = self.StellarMassFunction(zi, SM_bins, False)
+            numberD = self.StellarMassFunction(zi, np.log10(SM_bins), False)
 
-            SFR = 10**self.SFR(zi, SM_bins)/SM_bins
+            SFR = 10**self.SFR(zi, np.log10(SM_bins))/SM_bins
             error = 0.2 * SFR * np.log(10)
 
             dbin = []
@@ -236,10 +245,10 @@ class GalaxyHOD(HaloPopulation, BlobFactory):
 
         SFRD = np.transpose(SFRD) # [sfrd, err]
 
-        return SFRD
+        return SFRD[0]
     
 
-    def SFR(self, z, mass, haloMass=False):   
+    def SFR(self, z, logmass, haloMass=False):   
         """
         Main sequence stellar formation rate from Speagle2014
         
@@ -248,8 +257,8 @@ class GalaxyHOD(HaloPopulation, BlobFactory):
         z : int, float
             Redshift.
         mass : float (array)
-            if haloMass=False (default) is the stellar masses [stellar mass]
-            else halo masses [stellar mass]
+            if haloMass=False (default) is the log10 stellar masses [stellar mass]
+            else log10 halo masses [stellar mass]
         
         Returns
         -------
@@ -257,19 +266,20 @@ class GalaxyHOD(HaloPopulation, BlobFactory):
             log10 of MS SFR [yr^-1]
         """
 
-        # cosmo = FlatLambdaCDM(H0=70*u.km/u.s/u.Mpc, Om0=0.3)
-
         if haloMass:
             #convert from halo mass to stellar mass
             N, M_1, beta, gamma = self._SMF_PQ()
+            mass = [10**i for i in logmass]
             Ms = self._SM_fromHM(z, mass, N, M_1, beta, gamma)
         else:
-            Ms = mass
+            Ms = [10**i for i in logmass]
+
+        cos = Cosmology()
 
         # t: age of universe in Gyr
-        t = cosmo.age(z).value
+        t = cos.t_of_z(z=z) / s_per_gyr
 
-        if t < cosmo.age(6).value: # if t > z=6
+        if t < cos.t_of_z(z=6) / s_per_gyr: # if t > z=6
             print("Warning, age out of well fitting zone of this model.")
 
         error = np.ones(len(Ms)) * 0.2 #[dex] the stated "true" scatter
@@ -288,7 +298,7 @@ class GalaxyHOD(HaloPopulation, BlobFactory):
         return logSFR
 
     #specific sfr
-    def SSFR(self, z, mass, haloMass=False):
+    def SSFR(self, z, logmass, haloMass=False):
         """
         Specific stellar formation rate.
         
@@ -297,8 +307,8 @@ class GalaxyHOD(HaloPopulation, BlobFactory):
         z : int, float
             Redshift.
         mass : float (array)
-            if haloMass=False (default) is the stellar masses [stellar mass]
-            else halo masses [stellar mass]
+            if haloMass=False (default) is the log10 stellar masses [stellar mass]
+            else log10 halo masses [stellar mass]
         
         Returns
         -------
@@ -309,11 +319,12 @@ class GalaxyHOD(HaloPopulation, BlobFactory):
         if haloMass:
             #convert from halo mass to stellar mass
             N, M_1, beta, gamma = self._SMF_PQ()
+            mass = [10**i for i in logmass]
             Ms = self._SM_fromHM(z, mass, N, M_1, beta, gamma)
         else:
-            Ms = mass
+            Ms = [10**i for i in logmass]
 
-        logSSFR = self.SFR(z, Ms) - np.log10(Ms)
+        logSSFR = self.SFR(z, np.log10(Ms)) - np.log10(Ms)
 
         return logSSFR
       
