@@ -16,8 +16,12 @@ pop = ares.populations.GalaxyPopulation(**pars)
 **FirstFits.ipynb**: Starting to work with fitting in ARES for the LF.  
 **SMF_fit.ipynb**: Working on MCMC fit of SMF, currently not looking too great.  
 **SMF_fitScript.py**: Python script of SMF_fit.ipynb.  
-**AnotherBlob.ipynb**: Getting a second blob for SFRD set up.   
-**CheckingFitGuesses.ipynb**: For checking walkers, initial guesses.   
+**FitResults.ipynb**: Playing around with results of MCMCs.   
+**CheckingFitGuesses.ipynb**: For checking walkers, initial guesses. 
+
+### Cedar   
+#### CedarScripts   
+Various bash scripts for running and analyzing MCMCs on Cedar.   
  
 ### Miscellaneous
 **DataCompile.ipynb**: Script to read and format data from "behroozi-2013-data-compilation" for more SMF and SSFR lit values.   
