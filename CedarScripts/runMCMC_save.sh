@@ -1,13 +1,14 @@
 #!/bin/bash
 #SBATCH --account=def-acliu
-#SBATCH --time=0-1:00
+#SBATCH --time=0-2:00
 #SBATCH --nodes=1
 #SBATCH --ntasks-per-node=32
 #SBATCH --mail-user=<emma.klemets@mail.mcgill.ca>
 #SBATCH --mail-type=ALL
-#SBATCH --mem=20G
+#SBATCH --mem=30G
 
-mpirun -np 32 python ~/projects/def-acliu/eklem1/MCMC_fitScript_new.py 128 20 140 0 4.0
+mpirun -np 32 python ~/projects/def-acliu/eklem1/MCMC_fitScript_new.py 128 20 300 0 4.0
+
 z=0.9
 
 file="slurm-${SLURM_JOB_ID}.out"
@@ -32,7 +33,7 @@ lowZ=${lowZ%%-*}
 
 highZ=${RunName##*-}
 
-echo "${day}, ${lowZ}, ${highZ}" >> $outputP
+echo "${SLURM_JOB_ID}, ${lowZ}, ${highZ}" >> $outputP
 
 parmsAll=$(grep '#-#-' temp.txt -A 8)
 

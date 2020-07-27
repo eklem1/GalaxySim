@@ -13,4 +13,4 @@ RunName=${RunName##*/}
 
 echo "files: ${RunName}"
 
-python ~/projects/def-acliu/eklem1/MCMC_results_new.py ${RunName} $2
+python ~/projects/def-acliu/eklem1/params_results.py ${RunName}
