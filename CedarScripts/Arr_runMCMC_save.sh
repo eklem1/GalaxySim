@@ -30,8 +30,9 @@ RunName=${RunName##*/}
 echo "files: ${RunName}"
 
 outputP="OutputArr.txt"
+temp="tempArr1.txt"
 
-python ~/projects/def-acliu/eklem1/params_results.py ${RunName} > tempArr.txt
+python ~/projects/def-acliu/eklem1/params_results.py ${RunName} > $temp
 
 day=${RunName#smf_}
 day=${day%%_*}
@@ -43,10 +44,11 @@ highZ=${RunName##*-}
 
 echo "${SLURM_JOB_ID}.${ID}, ${lowZ}, ${highZ}" >> $outputP
 
-parmsAll=$(grep '#-#-' tempArr.txt -A 8)
+temp2="tempArr2.txt"
 
-parmsAll=${parmsAll##*#}
-parmsAll=${parmsAll:1}
+grep '#-#-' $temp -A 10 > $temp2
+
+grep -v "#" "$temp2" > $temp
 
 while IFS= read -r line
 do
@@ -61,7 +63,7 @@ do
 	errNe=${errNe%]*}
 
 	echo "${val}, ${errPos}, ${errNe}" >> $outputP
-done <<< "$parmsAll"
+done < "$temp"
 
 	done
 fi

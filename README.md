@@ -10,7 +10,8 @@ pop = ares.populations.GalaxyPopulation(**pars)
 ### Creating Models   
 **WorkingFromHalo.ipynb**: Looking at a simplified relation of the HMF to LF as well as to SMF.   
 **HMFtoSMF_nonLinear.ipynb**: Starting from Moster2010 paper, a DPL relation of HMF to SMF.  
-**SFRs.ipynb**: Starting from Speagle2014 paper, smain sequence SFR, SSFR and SFRD.  
+**SFRs.ipynb**: Starting from Speagle2014 paper, smain sequence SFR, SSFR and SFRD.    
+**SMF_SFvsQ.ipynb**: Star-forming fraction to account for the difference of sf vs quiescent galaxies.   
 
 ### MCMC Fits   
 **FirstFits.ipynb**: Starting to work with fitting in ARES for the LF.  

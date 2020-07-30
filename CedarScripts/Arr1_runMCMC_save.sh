@@ -6,16 +6,16 @@
 #SBATCH --mail-user=<emma.klemets@mail.mcgill.ca>
 #SBATCH --mail-type=ALL
 #SBATCH --mem=20G
-#SBATCH --array=1-8%1
+#SBATCH --array=1-4%1
 
-input=$(cat ./ArrScript/input_6.txt)
+input=$(cat ./ArrScript/input_7.txt)
 echo $input
 
-mpirun -np 32 python ~/projects/def-acliu/eklem1/MCMC_fitScript_new.py $input
+mpirun -np 32 python ~/projects/def-acliu/eklem1/MCMC_fitScript_M.py $input
 
-if [[ $SLURM_ARRAY_TASK_ID = 8 ]]
+if [[ $SLURM_ARRAY_TASK_ID = 4 ]]
 then
-	for ID in {1..8}
+	for ID in {1..4}
 	do	
 #z=0.9
 
@@ -63,7 +63,7 @@ do
 	errNe=${errNe%]*}
 
 	echo "${val}, ${errPos}, ${errNe}" >> $outputP
-done <<< "$temp"
+done < "$temp"
 
 	done
 fi
