@@ -15,12 +15,15 @@ pop = ares.populations.GalaxyPopulation(**pars)
 
 ### MCMC Fits   
 **FirstFits.ipynb**: Starting to work with fitting in ARES for the LF.  
-**SMF_fit.ipynb**: Working on MCMC fit of SMF, currently not looking too great.  
+**SMF_fit.ipynb**: First work on MCMC fit of SMF, with old M_1 equation, and no SFRD blob.  
 **SMF_fitScript.py**: Python script of SMF_fit.ipynb.  
 **FitResults.ipynb**: Playing around with results of MCMCs.   
 **CheckingFitGuesses.ipynb**: For checking walkers, initial guesses.   
    
 **CompareParams.ipynb**: Comparing parameter values and resulting SMFs for various MCMC runs.    
+
+**fractSMF_fit.py**: First try at fitting the SMF with the star-forming and quiescent fractions.   
+**SF_FitResults.ipynb**: Looking at results of previous file fitting.
 
 ### Cedar   
 #### CedarScripts   
