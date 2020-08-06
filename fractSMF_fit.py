@@ -11,29 +11,37 @@ import distpy
 # Independent variables
 redshifts = np.sort(np.array([0.875, 1.125, 1.75, 2.25, 2.75]))
 
-# [0.10165, 0.25, 0.35, 0.45, 0.575, 0.725, 0.9][1.65, 2.5, 3.5]
 Ms = np.linspace(7, 12, 60)
 
 # blob 1
-blob_n1 = ['galaxy_smf']
+blob_n1 = ['galaxy_smf_sf']
 blob_i1 = [('z', redshifts), ('logbins', Ms)]
 blob_f1 = ['StellarMassFunction']
 
 blob_pars = \
 {
- 'blob_names': [blob_n1],
- 'blob_ivars': [blob_i1],
- 'blob_funcs': [blob_f1],
- 'blob_kwargs': [None],
+ 'blob_names': [blob_n1, ['galaxy_smf']],
+ 'blob_ivars': [blob_i1, blob_i1],
+ 'blob_funcs': [blob_f1, blob_f1],
+ 'blob_kwargs': [[{'sf_type': 'smf_sf'}], [None]]
 }
 
 #define the parameters that remain unchanged
 base_pars = ares.util.ParameterBundle('emma:model1')
-base_pars.update(blob_pars, pop_sf_type='sf')
+base_pars.update(blob_pars)#, pop_sf_type='sf')
 base_pars.update({'debug':True})
 
+blob_parsQ = \
+{
+ 'blob_names': [['galaxy_smf_Q']],
+ 'blob_ivars': [blob_i1],
+ 'blob_funcs': [blob_f1],
+ 'blob_kwargs': [[{'sf_type': 'smf_q'}]]
+}
+
 base_parsQ = ares.util.ParameterBundle('emma:model1')
-base_parsQ.update(blob_pars, pop_sf_type='q')
+base_parsQ.update(blob_parsQ)
+base_parsQ.update({'debug':True})
 
 free_pars = \
 [
@@ -108,9 +116,9 @@ fitter_smfQ.include.append('smf_q')
 # The data can also be provided more explicitly
 fitter_smfQ.data = 'tomczak2014'
 
-fitter = ares.inference.ModelFit(**base_pars)
-fitter.add_fitter(fitter_smf)
+fitter = ares.inference.ModelFit(**base_parsQ)
 fitter.add_fitter(fitter_smfQ)
+fitter.add_fitter(fitter_smf)
 
 # Establish the object to which we'll pass parameters
 from ares.populations.GalaxyHOD import GalaxyHOD
@@ -140,4 +148,4 @@ fitter.guesses = guesses
 # Run the thing
 #fitter.run(title, burn=BurnIn, steps=StepCount, save_freq=5, clobber=True)
 
-fitter.run('MCMC_files/fract_test3SQ', burn=5, steps=100, save_freq=2, clobber=True)
+fitter.run('MCMC_files/fract_test1SQ', burn=5, steps=80, save_freq=2, clobber=True)
