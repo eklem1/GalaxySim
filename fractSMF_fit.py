@@ -14,34 +14,64 @@ redshifts = np.sort(np.array([0.875, 1.125, 1.75, 2.25, 2.75]))
 Ms = np.linspace(7, 12, 60)
 
 # blob 1
+#blob_n1 = ['galaxy_smf_sf']
+#blob_i1 = [('z', redshifts), ('logbins', Ms)]
+#blob_f1 = ['StellarMassFunction']
+#
+#blob_pars = \
+#{
+# 'blob_names': [blob_n1, ['galaxy_smf']],
+# 'blob_ivars': [blob_i1, blob_i1],
+# 'blob_funcs': [blob_f1, blob_f1],
+# 'blob_kwargs': [[{'sf_type': 'smf_sf'}], [None]]
+#}
+
+#define the parameters that remain unchanged
+#base_pars = ares.util.ParameterBundle('emma:model1')
+#base_pars.update(blob_pars)#, pop_sf_type='sf')
+#base_pars.update({'debug':True})
+#
+#blob_parsQ = \
+#{
+# 'blob_names': [['galaxy_smf_Q']],
+# 'blob_ivars': [blob_i1],
+# 'blob_funcs': [blob_f1],
+# 'blob_kwargs': [[{'sf_type': 'smf_q'}]]
+#}
+#
+#base_parsQ = ares.util.ParameterBundle('emma:model1')
+#base_parsQ.update(blob_parsQ)
+#base_parsQ.update({'debug':True})
+
+# blob 1
 blob_n1 = ['galaxy_smf_sf']
 blob_i1 = [('z', redshifts), ('logbins', Ms)]
 blob_f1 = ['StellarMassFunction']
+blob_k1 = [{'sf_type': 'smf_sf'}]
+
+blob_n2 = ['galaxy_smf_q']
+blob_i2 = [('z', redshifts), ('logbins', Ms)]
+blob_f2 = ['StellarMassFunction']
+blob_k2 = [{'sf_type': 'smf_q'}]
+
+blob_n3 = ['galaxy_smf']
+blob_i3 = [('z', redshifts), ('logbins', Ms)]
+blob_f3 = ['StellarMassFunction']
+blob_k3 = [{'sf_type': 'smf_tot'}]
 
 blob_pars = \
 {
- 'blob_names': [blob_n1, ['galaxy_smf']],
- 'blob_ivars': [blob_i1, blob_i1],
- 'blob_funcs': [blob_f1, blob_f1],
- 'blob_kwargs': [[{'sf_type': 'smf_sf'}], [None]]
+ 'blob_names': [blob_n1, blob_n2, blob_n3],
+ 'blob_ivars': [blob_i1, blob_i2, blob_i3],
+ 'blob_funcs': [blob_f1, blob_f2, blob_f3],
+ 'blob_kwargs': [blob_k1, blob_k2, blob_k3]
 }
 
 #define the parameters that remain unchanged
 base_pars = ares.util.ParameterBundle('emma:model1')
-base_pars.update(blob_pars)#, pop_sf_type='sf')
+base_pars.update(blob_pars)
 base_pars.update({'debug':True})
 
-blob_parsQ = \
-{
- 'blob_names': [['galaxy_smf_Q']],
- 'blob_ivars': [blob_i1],
- 'blob_funcs': [blob_f1],
- 'blob_kwargs': [[{'sf_type': 'smf_q'}]]
-}
-
-base_parsQ = ares.util.ParameterBundle('emma:model1')
-base_parsQ.update(blob_parsQ)
-base_parsQ.update({'debug':True})
 
 free_pars = \
 [
@@ -102,23 +132,41 @@ guesses = \
 }
 
 # Initialize a fitter object and give it the data to be fit
-fitter_smf = ares.inference.FitGalaxyPopulation(**base_pars)
+#fitter_smf = ares.inference.FitGalaxyPopulation(**base_pars)
+#
+#fitter_smf.include.append('smf_sf')
+#
+## The data can also be provided more explicitly
+#fitter_smf.data = 'tomczak2014'#,  'mortlock2011', 'moustakas2013', 'marchesini2009_10'
+#
+##Q
+#fitter_smfQ = ares.inference.FitGalaxyPopulation(**base_parsQ)
+#
+#fitter_smfQ.include.append('smf_q')
+## The data can also be provided more explicitly
+#fitter_smfQ.data = 'tomczak2014'
+#
+#fitter = ares.inference.ModelFit(**base_parsQ)
+#fitter.add_fitter(fitter_smfQ)
+#fitter.add_fitter(fitter_smf)
 
+# Initialize a fitter object and give it the data to be fit
+fitter_smf = ares.inference.FitGalaxyPopulation(**base_pars)
 fitter_smf.include.append('smf_sf')
 
 # The data can also be provided more explicitly
 fitter_smf.data = 'tomczak2014'#,  'mortlock2011', 'moustakas2013', 'marchesini2009_10'
 
 #Q
-fitter_smfQ = ares.inference.FitGalaxyPopulation(**base_parsQ)
+fitter_smfQ = ares.inference.FitGalaxyPopulation(**base_pars)
 
 fitter_smfQ.include.append('smf_q')
 # The data can also be provided more explicitly
 fitter_smfQ.data = 'tomczak2014'
 
-fitter = ares.inference.ModelFit(**base_parsQ)
-fitter.add_fitter(fitter_smfQ)
+fitter = ares.inference.ModelFit(**base_pars)
 fitter.add_fitter(fitter_smf)
+fitter.add_fitter(fitter_smfQ)
 
 # Establish the object to which we'll pass parameters
 from ares.populations.GalaxyHOD import GalaxyHOD
