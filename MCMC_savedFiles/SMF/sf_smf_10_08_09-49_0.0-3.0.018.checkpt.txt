@@ -1,0 +1,4 @@
+Simulation began: Mon Aug 10 10:35:07 2020
+Simulation finished: Mon Aug 10 10:35:07 2020
+Generating blobs: Mon Aug 10 10:35:08 2020
+Blobs generated    : Mon Aug 10 10:35:08 2020
