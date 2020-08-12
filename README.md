@@ -1,5 +1,7 @@
 # GalaxySim
 
+**GalSimReport.pdf**: Report with an overiew of my work over the summer: main functions of GalaxyHOD.py with a little theory, MCMC results and various smaller files.   
+
 **GalaxyHOD.py**: The basis for a new ARES class with a LF and SMF model based off the work below, as well as main sequence SFR, SSFR and SFRD models.   
 See https://github.com/eklem1/ares/tree/hod_add for updated file.   
 Basic set up:
@@ -27,7 +29,7 @@ pop = ares.populations.GalaxyPopulation(**pars)
 
 ### Cedar   
 #### CedarScripts   
-Various bash scripts for running and analyzing MCMCs on Cedar.   
+Various bash scripts for running and analyzing MCMCs on Cedar, see pdf section 5.1 for details.   
 
  
 ### Miscellaneous

@@ -49,7 +49,7 @@ blob_k1 = [{'sf_type': 'smf_sf'}]
 blob_n2 = ['galaxy_smf_q']
 blob_i2 = [('z', redshifts), ('logbins', Ms)]
 blob_f2 = ['StellarMassFunction']
-blob_k2 = [None]
+blob_k2 = [{'sf_type': 'smf_q'}]
 
 blob_n3 = ['galaxy_smf']
 blob_i3 = [('z', redshifts), ('logbins', Ms)]
@@ -58,14 +58,14 @@ blob_k3 = [{'sf_type': 'smf_tot'}]
 
 blob_pars = \
 {
- 'blob_names': [blob_n1, blob_n2, blob_n3],
- 'blob_ivars': [blob_i1, blob_i2, blob_i3],
- 'blob_funcs': [blob_f1, blob_f2, blob_f3],
- 'blob_kwargs': [blob_k1, blob_k2, blob_k3]
+ 'blob_names': [blob_n1, blob_n2],
+ 'blob_ivars': [blob_i1, blob_i2],
+ 'blob_funcs': [blob_f1, blob_f2],
+ 'blob_kwargs': [blob_k1, blob_k2]
 }
 
 #define the parameters that remain unchanged
-base_pars = ares.util.ParameterBundle('emma:model1')
+base_pars = ares.util.ParameterBundle('emma:model3')
 base_pars.update(blob_pars)
 base_pars.update({'debug':True})
 
@@ -73,18 +73,20 @@ free_pars = \
 [
      #A
     'pq_func_par0[7]',
-    'pq_func_par1[7]',
+    #'pq_func_par1[7]',
     'pq_func_par2[7]', 
 
     #B
     'pq_func_par0[8]',
-    'pq_func_par1[8]', 
+    #'pq_func_par1[8]', 
     'pq_func_par2[8]',
 
     #C
     'pq_func_par0[9]',
+    'pq_func_par2[9]',
     #D
-    'pq_func_par0[10]', 
+    'pq_func_par0[10]',
+    'pq_func_par2[10]',
 
 ]
 
@@ -95,36 +97,39 @@ from distpy.distribution import DistributionSet
 
 ps = DistributionSet()
 #total must be negative
-ps.add_distribution(UniformDistribution(-4, 4), 'pq_func_par0[7]')
-ps.add_distribution(UniformDistribution(0, 3.5),  'pq_func_par1[7]')
-ps.add_distribution(UniformDistribution(-5.0, 1.0),   'pq_func_par2[7]')
+ps.add_distribution(UniformDistribution(-8, 0), 'pq_func_par0[7]')
+#ps.add_distribution(UniformDistribution(0, 3.5),  'pq_func_par1[7]')
+ps.add_distribution(UniformDistribution(-2.0, 2.0),   'pq_func_par2[7]')
 
 #(-8, -12)
-ps.add_distribution(UniformDistribution(-13.0, -7.0),  'pq_func_par0[8]')
-ps.add_distribution(UniformDistribution(-1.0, 3.5),   'pq_func_par1[8]')
-ps.add_distribution(UniformDistribution(-4.0, 3.5),  'pq_func_par2[8]')
+ps.add_distribution(UniformDistribution(-15.0, -7.0),  'pq_func_par0[8]')
+#ps.add_distribution(UniformDistribution(-1.0, 3.5),   'pq_func_par1[8]')
+ps.add_distribution(UniformDistribution(-1.0, 2.0),  'pq_func_par2[8]')
 
-ps.add_distribution(UniformDistribution(2.0, 8.0),   'pq_func_par0[9]')
+ps.add_distribution(UniformDistribution(-2.0, 8.0),   'pq_func_par0[9]')
+ps.add_distribution(UniformDistribution(-2.0, 2.0),   'pq_func_par2[9]')
 
-ps.add_distribution(UniformDistribution(1.00, 6.0),  'pq_func_par0[10]')
-
+ps.add_distribution(UniformDistribution(-1.0, 6.0),  'pq_func_par0[10]')
+ps.add_distribution(UniformDistribution(-2.0, 2.0),   'pq_func_par2[10]')
 
 guesses = \
 {
      #A
-	'pq_func_par0[7]': -1, #const
-	'pq_func_par1[7]': 0.875, #offset
-	'pq_func_par2[7]': -0.8, #m
+	'pq_func_par0[7]': -1.5, #const
+	#'pq_func_par1[7]': 0.875, #offset
+	'pq_func_par2[7]': 0.1, #m
 
     #B
-	'pq_func_par0[8]': -10.84, #const
-	'pq_func_par1[8]': 1.75, #offset
-	'pq_func_par2[8]': 0.902857, #m
+	'pq_func_par0[8]': -10.24, #const
+	#'pq_func_par1[8]': 1.75, #offset
+        'pq_func_par2[8]': 0.06, #m
 
     #C
-	'pq_func_par0[9]': 3.0, #const
+	'pq_func_par0[9]': 2.25, #const
+	'pq_func_par2[9]': 0.3,
     #D
-	'pq_func_par0[10]': 2.0, #const
+	'pq_func_par0[10]': 1.4, #const
+	'pq_func_par2[10]': 0.2,
 }
 
 # Initialize a fitter object and give it the data to be fit
@@ -172,4 +177,4 @@ dt_string = datetime.now().strftime("%d_%m_%H-%M") + "_" + str(zLim_low) + "-" +
 title = home + "/scratch/jobs/MCMC_files/sf_smf_" + dt_string
 
 # Run the thing
-fitter.run(title, burn=BurnIn, steps=StepCount, save_freq=5, clobber=True)
+fitter.run(title, burn=BurnIn, steps=StepCount, save_freq=20, clobber=True)

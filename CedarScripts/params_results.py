@@ -10,7 +10,7 @@ title = '/home/eklem1/scratch/jobs/MCMC_files/'+ sys.argv[1]
 
 print(title)
 anl = ares.analysis.ModelSet(title)
-nwalkers = nl.nwalkers
+nwalkers = anl.nwalkers
 anl.skip = nwalkers*100
 
 labels = \
